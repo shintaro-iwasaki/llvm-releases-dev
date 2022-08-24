@@ -1,0 +1,42 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  build-release:
+    
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Git-clone
+        run: |
+          git submodule update --init --recursive
+
+      - name: Build
+        run: |
+          MAIN_DIR="$(pwd)/install"
+          cd llvm-project/ 
+          mkdir build
+          cd build
+          cmake ../llvm -DLLVM_ENABLE_PROJECTS="mlir" -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_TARGETS_TO_BUILD="X86;NVPTX;AMDGPU" -DCMAKE_INSTALL_PREFIX="${MAIN_DIR}" -DLLVM_ENABLE_ASSERTIONS=True
+          make -j 2 install
+
+      - name: Tar
+        run: |
+          tar -cJf "install.tar.xz" "${MAIN_DIR}"
+ 
