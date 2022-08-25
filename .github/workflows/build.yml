@@ -46,26 +46,39 @@ jobs:
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
-        if: github.event_name == 'push'
+        if: github.event_name == 'pull_request'
         with:
           if-no-files-found: error
           name: build_artifact
           path: ${{ github.sha }}-ubuntu2.txt
 
-  build-complete:
+  push-release:
 
     runs-on: ubuntu-latest
     needs: [build-ubuntu-latest, build-ubuntu-latest2]
 
-    # if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'pull_request' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'pull_request' }}
     steps:
-      - name: complete
-        run: |
-          echo "complete $(date)" > ${{ github.sha }}-complete.txt
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Completion
-        uses: actions/upload-artifact@v3
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
         with:
           if-no-files-found: error
           name: build_artifact
-          path: ${{ github.sha }}-complete.txt
+          path: ${{ github.sha }}-*.txt
+
+      - name: Check files
+        run: |
+          ls -lah
+
+      - name: Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest-2"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            *.txt
