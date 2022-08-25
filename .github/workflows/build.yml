@@ -1,0 +1,83 @@
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build-ubuntu-latest:
+    
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Compile
+        run: |
+          cat /proc/cpuinfo
+          echo "file_created $(date)" > ${{ github.sha }}-ubuntu.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        if: github.event_name == 'pull_request'
+        with:
+          if-no-files-found: error
+          name: build_artifact
+          path: ${{ github.sha }}-ubuntu.txt
+
+  build-ubuntu-latest2:
+    
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Compile
+        run: |
+          cat /proc/cpuinfo
+          echo "file_created2 $(date)" > ${{ github.sha }}-ubuntu2.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        if: github.event_name == 'pull_request'
+        with:
+          if-no-files-found: error
+          name: build_artifact
+          path: ${{ github.sha }}-ubuntu2.txt
+
+  push-release:
+
+    runs-on: ubuntu-latest
+    needs: [build-ubuntu-latest, build-ubuntu-latest2]
+
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          if-no-files-found: error
+          name: build_artifact
+
+      - name: Check files
+        run: |
+          ls -lah
+
+      - name: Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest-2"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            *.txt
