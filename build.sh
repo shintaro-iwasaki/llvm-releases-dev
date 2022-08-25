@@ -11,12 +11,6 @@ mkdir -p "$BUILD_DIR"
 cp -r "$SOURCE_DIR/scripts" "$BUILD_DIR/scripts"
 
 # 2. Create a tarball of llvm-project
-echo "Downloading llvm-project"
-cd llvm-project
-git submodule update --init --recursive
-echo "git log -1"
-git log -1
-cd ..
 echo "Creating llvm-project.tar.gz"
 tar -czf "$BUILD_DIR/llvm-project.tar.gz" llvm-project
 
