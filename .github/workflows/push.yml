@@ -1,4 +1,4 @@
-name: Releaase
+name: Release
 
 on:
   workflow_run:
@@ -18,7 +18,7 @@ jobs:
         with:
           name: build_artifact
           path: ${GITHUB_SHA}-*.txt
-    
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"

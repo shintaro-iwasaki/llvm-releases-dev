@@ -21,14 +21,15 @@ jobs:
       - name: Compile
         run: |
           cat /proc/cpuinfo
-          echo "file_created $(date)" > ${GITHUB_SHA}-ubuntu.txt
+          echo "file_created $(date)" > ${{ github.sha }}-ubuntu.txt
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request'
         with:
+          if-no-files-found: error
           name: build_artifact
-          path: ${GITHUB_SHA}-ubuntu.txt
+          path: ${{ github.sha }}-ubuntu.txt
 
   build-ubuntu-latest2:
     
@@ -41,28 +42,30 @@ jobs:
       - name: Compile
         run: |
           cat /proc/cpuinfo
-          echo "file_created2 $(date)" > ${GITHUB_SHA}-ubuntu2.txt
+          echo "file_created2 $(date)" > ${{ github.sha }}-ubuntu2.txt
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request'
         with:
+          if-no-files-found: error
           name: build_artifact
-          path: ${GITHUB_SHA}-ubuntu2.txt
+          path: ${{ github.sha }}-ubuntu2.txt
 
   build-complete:
 
     runs-on: ubuntu-latest
-    needs: [build-ubuntu-latest]
+    needs: [build-ubuntu-latest, build-ubuntu-latest2]
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'pull_request' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'pull_request' }}
     steps:
-      - name: complete?
+      - name: complete
         run: |
-          echo "complete $(date)" > ${GITHUB_SHA}-complete.txt
+          echo "complete $(date)" > ${{ github.sha }}-complete.txt
 
       - name: Completion
         uses: actions/upload-artifact@v3
         with:
+          if-no-files-found: error
           name: build_artifact
-          path: ${GITHUB_SHA}-complete.txt
+          path: ${{ github.sha }}-complete.txt
