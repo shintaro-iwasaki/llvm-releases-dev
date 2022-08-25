@@ -1,29 +1,24 @@
-name: Integration Tests
+name: Releaase
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: [Build]
+    branches: [main]
+    types: [completed]
 
 jobs:
-
   build-release:
-    
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Compile
-        run: |
-          cat /proc/cpuinfo
-          echo "file_created" > a.txt
-
+      - uses: actions/download-artifact@v3
+        with:
+          name: build_artifact
+          path: ${GITHUB_SHA}-*.txt
+    
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -31,4 +26,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            a.txt
+            *.txt
