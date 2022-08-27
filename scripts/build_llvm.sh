@@ -3,12 +3,12 @@
 set -x -e
 
 # 0. Check
-SOURCE_DIR="$(dirname $0)"
+SOURCE_DIR="$(dirname $0)/../"
 PWD="$(pwd)"
 if [ ! -f "$SOURCE_DIR/llvm-project/llvm/CMakeLists.txt" ]; then
   echo "Error: $SOURCE_DIR/llvm-project/llvm/CMakeLists.txt is not found."
   echo "       Did you run git submodule update --init --recursive?"
-  exit -1
+  exit 1
 fi
 
 # Parse arguments
@@ -24,7 +24,7 @@ usage() {
   echo "PLATFORM       = {local|docker_ubuntu_18}"
   echo "CONFIG         = {release|assert|debug}"
   echo "NUM_JOBS       = {1|2|3|...}"
-  exit -1;
+  exit 1;
 }
 
 while getopts "o:p:c:j:" arg; do
@@ -40,26 +40,27 @@ while getopts "o:p:c:j:" arg; do
       ;;
     j)
       num_jobs="$OPTARG"
+      ;;
     *)
-	  usage()
+      usage
       ;;
   esac
 done
 
-if [ x"$install_prefix" == x -o x"$platform" == x -o x"$build_config" == x ]; then
-  usage()  
+if [ x"$install_prefix" == x ] || [ x"$platform" == x ] || [ x"$build_config" == x ]; then
+  usage
 fi
 
 # Set up CMake configurations
 CMAKE_CONFIGS='-DLLVM_ENABLE_PROJECTS=mlir -DLLVM_TARGETS_TO_BUILD="X86;NVPTX;AMDGPU"'
 if [ x"$build_config" == x"release" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIG} -DCMAKE_BUILD_TYPE=Release'
+  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Release'
 elif [ x"$build_config" == x"assert" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIG} -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_ENABLE_ASSERTIONS=True'
+  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_ENABLE_ASSERTIONS=True'
 elif [ x"$build_config" == x"debug" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIG} -DCMAKE_BUILD_TYPE=Debug'
+  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Debug'
 else
-  usage()
+  usage
 fi
 
 # Create a temporary build directory
@@ -102,7 +103,7 @@ elif [ x"$platform" == x"docker_ubuntu_18" ]; then
   docker rm "$DOCKER_ID"
 else
   rm -rf "$BUILD_DIR"
-  usage()
+  usage
 fi
 
 # Remove the temporary directory
