@@ -3,7 +3,7 @@
 set -x -e
 
 # 0. Check
-SOURCE_DIR="$(dirname $0)/../"
+SOURCE_DIR="$(realpath $(dirname $0)/../)"
 PWD="$(pwd)"
 if [ ! -f "$SOURCE_DIR/llvm-project/llvm/CMakeLists.txt" ]; then
   echo "Error: $SOURCE_DIR/llvm-project/llvm/CMakeLists.txt is not found."
@@ -52,13 +52,13 @@ if [ x"$install_prefix" == x ] || [ x"$platform" == x ] || [ x"$build_config" ==
 fi
 
 # Set up CMake configurations
-CMAKE_CONFIGS='-DLLVM_ENABLE_PROJECTS=mlir -DLLVM_TARGETS_TO_BUILD="X86;NVPTX;AMDGPU"'
+CMAKE_CONFIGS="-DLLVM_ENABLE_PROJECTS=mlir -DLLVM_TARGETS_TO_BUILD=X86;NVPTX;AMDGPU"
 if [ x"$build_config" == x"release" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Release'
+  CMAKE_CONFIGS="${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Release"
 elif [ x"$build_config" == x"assert" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_ENABLE_ASSERTIONS=True'
+  CMAKE_CONFIGS="${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_ENABLE_ASSERTIONS=True"
 elif [ x"$build_config" == x"debug" ]; then
-  CMAKE_CONFIGS='${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Debug'
+  CMAKE_CONFIGS="${CMAKE_CONFIGS} -DCMAKE_BUILD_TYPE=Debug"
 else
   usage
 fi
