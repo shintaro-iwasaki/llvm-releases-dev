@@ -10,74 +10,78 @@ on:
 
 jobs:
 
-  build-ubuntu-latest:
+  build:
     
-    runs-on: ubuntu-latest
-    steps:
+    runs-on: ${{ matrix.os }}
 
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        config: [release, assert]
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Checkout submodules
+        run: |
+          echo "XXX: git submodule update --init --recursive"
+
       - name: Compile
         run: |
-          cat /proc/cpuinfo
-          echo "file_created $(date)" > ${{ github.sha }}-ubuntu.txt
+          LLVM_VER="$(python3 build/get_llvm_version.py llvm-project/llvm/CMakeLists.txt)"
 
-      - name: Upload Artifact
+          CPU_ARCH="x86_64"
+
+          if [ x"${{ matrix.os }}" == x"ubuntu-latest" ]; then
+            # internally it uses a docker to run 18.04
+            PLATFORM_NAME="linux-gnu-ubuntu-18.04"
+            BUILD_PLATFORM="docker_ubuntu_18.04"
+          else
+            PLATFORM_NAME="osx"
+            BUILD_PLATFORM="local"
+          fi
+
+          CONFIG_SUFFIX="${{ matrix.config }}"
+
+          FILENAME="clang+llvm-${LLVM_VER}-${CPU_ARCH}-${PLATFORM_NAME}-${CONFIG_SUFFIX}.tar.xz"
+
+          sh build/build_llvm.sh -f $FILENAME -p $BUILD_PLATFORM -c ${{ matrix.config }}
+
+          mkdir -p ${{ github.sha }}
+          mv *.tar.xz ${{ github.sha }}/*.tar.xz
+
+      - name: Upload an artifact
         uses: actions/upload-artifact@v3
         if: github.event_name == 'pull_request'
         with:
           if-no-files-found: error
           name: build_artifact
-          path: ${{ github.sha }}-ubuntu.txt
+          path: ${{ github.sha }}
 
-  build-ubuntu-latest2:
-    
-    runs-on: ubuntu-latest
-    steps:
-
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Compile
-        run: |
-          cat /proc/cpuinfo
-          echo "file_created2 $(date)" > ${{ github.sha }}-ubuntu2.txt
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        if: github.event_name == 'pull_request'
-        with:
-          if-no-files-found: error
-          name: build_artifact
-          path: ${{ github.sha }}-ubuntu2.txt
-
-  push-release:
+  upload-tarballs:
 
     runs-on: ubuntu-latest
-    needs: [build-ubuntu-latest, build-ubuntu-latest2]
+
+    needs: [build-ubuntu, extract-version]
 
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Download Artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           if-no-files-found: error
           name: build_artifact
+          path: ${{ github.sha }}
 
-      - name: Check files
+      - name: Arrange locations
         run: |
           ls -lah
 
-      - name: Release
-        uses: marvinpinto/action-automatic-releases@latest
+      - name: Upload tarballs
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest-2"
-          prerelease: true
-          title: "Development Build"
-          files: |
-            *.txt
+          artifacts: "release.tar.gz,foo/*.txt"
+          bodyFile: "body.md"
+          token: ${{ secrets.YOUR_GITHUB_TOKEN }}
+
