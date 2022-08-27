@@ -25,7 +25,7 @@ jobs:
 
       - name: Checkout submodules
         run: |
-          echo "XXX: git submodule update --init --recursive"
+          git submodule update --init --recursive
 
       - name: Compile
         run: |
@@ -38,15 +38,15 @@ jobs:
             PLATFORM_NAME="linux-gnu-ubuntu-18.04"
             BUILD_PLATFORM="docker_ubuntu_18.04"
           else
-            PLATFORM_NAME="osx"
+            PLATFORM_NAME="apple-darwin"
             BUILD_PLATFORM="local"
           fi
 
           CONFIG_SUFFIX="${{ matrix.config }}"
 
-          FILENAME="clang+llvm-${LLVM_VER}-${CPU_ARCH}-${PLATFORM_NAME}-${CONFIG_SUFFIX}.tar.xz"
+          FILENAME="llvm+mlir-${LLVM_VER}-${CPU_ARCH}-${PLATFORM_NAME}-${CONFIG_SUFFIX}.tar.xz"
 
-          sh build/build_llvm.sh -f $FILENAME -p $BUILD_PLATFORM -c ${{ matrix.config }}
+          sh build/build_llvm.sh -f $FILENAME -p $BUILD_PLATFORM -c ${{ matrix.config }} -j 4
 
           mkdir -p ${{ github.sha }}
           mv *.tar.xz ${{ github.sha }}/*.tar.xz
@@ -63,7 +63,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    needs: [build-ubuntu, extract-version]
+    needs: [build]
 
     if: ${{ github.event_name == 'pull_request' }}
     steps:
@@ -77,11 +77,15 @@ jobs:
       - name: Arrange locations
         run: |
           ls -lah
+          echo "# ncipollo/release-action@v1"
 
       - name: Upload tarballs
-        uses: ncipollo/release-action@v1
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          artifacts: "release.tar.gz,foo/*.txt"
-          bodyFile: "body.md"
-          token: ${{ secrets.YOUR_GITHUB_TOKEN }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            ${{ github.sha }}/*.tar.xz
 
