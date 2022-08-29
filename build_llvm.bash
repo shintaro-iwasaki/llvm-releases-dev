@@ -3,13 +3,9 @@
 set -e -x
 
 # 0. Check
+
 PWD="$(pwd)"
 SOURCE_DIR="$PWD"
-if [ ! -f "$SOURCE_DIR/llvm-project/llvm/CMakeLists.txt" ]; then
-  echo "Error: $SOURCE_DIR/llvm-project/llvm/CMakeLists.txt is not found."
-  echo "       Did you run git submodule update --init --recursive?"
-  exit 1
-fi
 
 # Parse arguments
 install_prefix=""
@@ -50,6 +46,11 @@ done
 if [ x"$install_prefix" == x ] || [ x"$platform" == x ] || [ x"$build_config" == x ]; then
   usage
 fi
+
+# -1. Create a dummy file
+
+echo "ABCDEF" > "${PWD}/${install_prefix}.tar.xz"
+exit 0
 
 # Set up CMake configurations
 CMAKE_CONFIGS="-DLLVM_ENABLE_PROJECTS=mlir -DLLVM_TARGETS_TO_BUILD=X86;NVPTX;AMDGPU"

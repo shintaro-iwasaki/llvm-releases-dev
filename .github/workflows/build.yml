@@ -25,11 +25,12 @@ jobs:
 
       - name: Checkout submodules
         run: |
-          git submodule update --init --recursive
+          echo "git submodule update --init --recursive"
 
       - name: Compile
         run: |
-          LLVM_VER="$(python3 scripts/get_llvm_version.py llvm-project/llvm/CMakeLists.txt)"
+          # LLVM_VER="$(python3 scripts/get_llvm_version.py llvm-project/llvm/CMakeLists.txt)"
+          LLVM_VER="14.0.0"
 
           CPU_ARCH="x86_64"
 
