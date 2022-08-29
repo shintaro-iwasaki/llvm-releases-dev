@@ -44,9 +44,9 @@ jobs:
 
           CONFIG_SUFFIX="${{ matrix.config }}"
 
-          FILENAME="llvm+mlir-${LLVM_VER}-${CPU_ARCH}-${PLATFORM_NAME}-${CONFIG_SUFFIX}.tar.xz"
+          OUTPUT="llvm+mlir-${LLVM_VER}-${CPU_ARCH}-${PLATFORM_NAME}-${CONFIG_SUFFIX}"
 
-          bash build/build_llvm.bash -f $FILENAME -p $BUILD_PLATFORM -c ${{ matrix.config }} -j 4
+          bash build_llvm.bash -o "$OUTPUT" -p "$BUILD_PLATFORM" -c ${{ matrix.config }} -j 4
 
           mkdir -p ${{ github.sha }}
           mv *.tar.xz ${{ github.sha }}/*.tar.xz

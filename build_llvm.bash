@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -e
+set -e -x
 
 # 0. Check
-SOURCE_DIR="$(realpath $(dirname $0)/../)"
 PWD="$(pwd)"
+SOURCE_DIR="$PWD"
 if [ ! -f "$SOURCE_DIR/llvm-project/llvm/CMakeLists.txt" ]; then
   echo "Error: $SOURCE_DIR/llvm-project/llvm/CMakeLists.txt is not found."
   echo "       Did you run git submodule update --init --recursive?"
@@ -19,9 +19,9 @@ num_jobs=8
 
 usage() {
   echo "Usage: bash build_llvm.sh -o INSTALL_PREFIX -p PLATFORM -c CONFIG [-j NUM_JOBS]"
-  echo "Ex: bash build_llvm.sh -o llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04 -p docker_ubuntu_18 -c assert -j 16"
+  echo "Ex: bash build_llvm.sh -o llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04 -p docker_ubuntu_18.04 -c assert -j 16"
   echo "INSTALL_PREFIX = <string> # \${INSTALL_PREFIX}.tar.xz is created"
-  echo "PLATFORM       = {local|docker_ubuntu_18}"
+  echo "PLATFORM       = {local|docker_ubuntu_18.04}"
   echo "CONFIG         = {release|assert|debug}"
   echo "NUM_JOBS       = {1|2|3|...}"
   exit 1;
@@ -64,7 +64,6 @@ else
 fi
 
 # Create a temporary build directory
-
 BUILD_DIR="$(mktemp -d)"
 echo "Using a temporary directory for the build: $BUILD_DIR"
 rm -rf "$BUILD_DIR"
@@ -77,7 +76,7 @@ if [ x"$platform" == x"local" ]; then
   make -j${num_jobs} install
   tar -cJf "${PWD}/${install_prefix}.tar.xz" "$install_prefix"
   popd
-elif [ x"$platform" == x"docker_ubuntu_18" ]; then
+elif [ x"$platform" == x"docker_ubuntu_18.04" ]; then
   # Prepare build directories
   cp -r "$SOURCE_DIR/scripts" "$BUILD_DIR/scripts"
 
@@ -99,7 +98,7 @@ elif [ x"$platform" == x"docker_ubuntu_18" ]; then
   # We cannot directly copy a file from a Docker image, so first
   # create a Docker container, copy the tarball, and remove the container.
   DOCKER_ID="$(docker create $DOCKER_REPOSITORY:$DOCKER_TAG)"
-  docker cp "$DOCKER_ID:/tmp/${install_dir_name}.tar.xz" "${PWD}/"
+  docker cp "$DOCKER_ID:/tmp/${install_prefix}.tar.xz" "${PWD}/"
   docker rm "$DOCKER_ID"
 else
   rm -rf "$BUILD_DIR"
