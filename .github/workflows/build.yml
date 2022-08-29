@@ -50,7 +50,7 @@ jobs:
           bash build_llvm.bash -o "$OUTPUT" -p "$BUILD_PLATFORM" -c ${{ matrix.config }} -j 4
 
           mkdir -p ${{ github.sha }}
-          mv *.tar.xz ${{ github.sha }}/*.tar.xz
+          mv *.tar.xz ${{ github.sha }}/
 
       - name: Upload an artifact
         uses: actions/upload-artifact@v3
